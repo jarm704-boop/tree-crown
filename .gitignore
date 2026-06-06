@@ -1,6 +1,11 @@
 *.pyc
 *.pyo
 __pycache__/
+**/__pycache__/
 .venv/
 dist/
 .env
+*.egg-info/
+cache/
+outputs/
+.ipynb_checkpoints/

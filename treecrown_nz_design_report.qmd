@@ -1,0 +1,89 @@
+---
+title: "treecrown-nz Design Report"
+author: "Joshua Armstrong"
+format: html
+editor: visual
+---
+
+## Project overview
+
+Our group’s assigned topic was **treecrown-nz**. The original task was to create a Python package that answers the question of which Auckland neighbourhoods are tree-rich and how shaded a typical walk is. The expected output was a comparison of canopy cover across three suburbs and a shaded walking route map where road segments are coloured by the amount of overhead tree canopy.
+
+The main functions created for the package were:
+
+```{python}
+#| eval: false
+load_canopy()
+load_suburbs()
+canopy_coverage()
+route_shade()
+```
+
+These functions allow users to load tree canopy data, load suburb boundaries, calculate canopy coverage by suburb, and calculate how shaded a road or walking route is based on nearby tree canopy.
+
+## Change from Auckland to Wellington
+
+The original assignment brief was based on Auckland tree canopy data. However, we had difficulty accessing a usable Auckland canopy dataset for the project. The Auckland data was either unavailable or difficult to access. Because the main purpose of the package was to demonstrate a reusable canopy analysis workflow, we adapted the project to use Wellington data instead.
+
+This change meant the package still answered the same question, but for Wellington rather than Auckland. Instead of comparing Auckland suburbs we compared Wellington suburbs using available tree canopy and suburb boundary data from the Wellington City Council. The main logic of the task stayed the same. We still calculated canopy percentage for neighbourhood polygons and measured shade along a selected route.
+
+For the Wellington version, we used:
+
+- **Wellington tree canopy data** for the canopy polygons.
+- **Wellington suburb boundary data** to calculate canopy coverage by suburb.
+- **OpenStreetMap road data through OSMnx** to get road geometry and road names for the shaded walk analysis.
+
+Joel and Hayden contributed by finding the Wellington tree cover data that made the adapted version of the project possible. This was important as without a usable canopy dataset, we would not have been able to complete the suburb canopy comparison or the shaded route analysis.
+
+## Key design choices
+
+### CRS choice
+
+All spatial layers were reprojected to **EPSG:2193 NZTM** before spatial calculations. This CRS was chosen because it uses metres, which makes it suitable for calculating areas, distances, and route buffers. If the data stayed in latitude and longitude coordinates, the area and distance calculations would not be reliable.
+
+### Data choice
+
+The main data decision was to change from Auckland data to Wellington data because the Auckland canopy dataset was unavailable. Wellington was still suitable because it had real canopy polygons and suburb boundaries that could be used to demonstrate the same workflow. We did not need an API key for this but used the WCC REST services, We also used OpenStreetMap through OSMnx for road data because it provided road geometry and road names for the shaded walking route analysis.
+
+### Scope decision
+
+The project scope was kept focused on a small number of clear functions rather than trying to answer every possible canopy question. For the demonstration, we calculated canopy coverage for Wellington suburbs and then focused the shaded route analysis on one selected road, **Karaka Bay Road in Karaka Bays**. This made the analysis easier to explain and kept the package realistic for the assignment timeframe.
+
+## Package workflow
+
+The workflow starts by loading suburb boundaries and canopy polygons. The package then calculates the percentage of each suburb covered by tree canopy by clipping the canopy polygons to each suburb and calculating the canopy area as a percentage of the suburb area.
+
+For the walking shade analysis, the package uses road geometry from OpenStreetMap. The selected road is buffered by a small walking corridor distance, such as in the demo treecrown ipynb of 7.5 metres, and the canopy polygons are clipped to that corridor. The package then calculates the percentage of the walking corridor covered by tree canopy. This gives an estimate of how shaded that road is for pedestrians.
+
+In the demo notebook, we used this process to create:
+
+1. A bar graph showing the Wellington suburbs with the highest canopy coverage.
+2. A shaded route map for Karaka Bay Road, showing how much of the walking corridor is covered by tree canopy.
+
+## My contributions to the team
+
+My main contribution was building and testing the core package functions. I worked on the package structure using the `src/` and helped make sure the package could be imported correctly. I also worked on the four main functions: `load_canopy()`, `load_suburbs()`, `canopy_coverage()`, and `route_shade()`.
+
+I helped debug the canopy coverage calculations when some suburbs returned incorrect results. For example, one result showed canopy coverage over 100 percent, which was not possible. I identified that this was caused by duplicate or overlapping canopy polygons being counted more than once. I fixed this by dissolving or unioning the clipped canopy geometries before calculating the final area.
+
+I worked on the shaded route analysis this included using OSMnx to access road geometry and road names, filtering the road network to a selected Wellington suburb, and selecting Karaka Bay Road for the final route map. I tested different buffer distances and decided that a smaller walking corridor buffer was more realistic because the analysis should only count trees close enough to actually give direct shade to pedestrians walking along the road.
+
+I also prepared the demo notebook outputs I created the suburb canopy bar graph and the shaded route map and then adjusted the map design so that the road, canopy polygons, suburb boundary, and legend would be easier to read.
+
+I helped test the package locally and through TestPyPI. This included running the package tests, building the package, uploading it to TestPyPI, and checking that it could be installed on another computer as the package needed to work outside of just our ownenvironment.
+
+## Poster
+
+Joel and Hayden will also be handling the design and layout of the posters they will focus on turning the project into a visual presentation for the poster showcase, including the structure, layout, and design of the final poster.
+
+## Challenges and solutions
+
+One of the biggest challenges was the unavailability of the Auckland canopy data. Instead of stopping the project, we changed the workflow to Wellington data while keeping the same goal.
+
+Another challenge was making sure the spatial data aligned correctly. We solved this by converting all spatial layers to EPSG:2193 before doing area, buffer, and intersection calculations.
+
+We also had issues where road segments were outside the chosen suburb or only a tiny part of the road was selected. To fix this, we checked whether the selected road actually intersected the suburb boundary and changed the route to Karaka Bay Road, which was more appropriate for the Karaka Bays analysis.
+
+## Conclusion
+
+Overall, our package successfully adapts the original tree canopy analysis brief to Wellington, although the project changed from Auckland to Wellington the core purpose stayed the same. The package calculates tree canopy coverage for suburbs and estimates shade along a walking route. The final result is a reusable GIS package that demonstrates how urban tree canopy data can be used to understand neighbourhood greenness and pedestrian shade for many uses in the future.

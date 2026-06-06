@@ -1,52 +1,119 @@
 # treecrown-nz
 
-treecrown-nz is a small geospatial Python package for measuring urban tree canopy coverage and estimating shade along walking routes.
+treecrown-nz is a Python package for measuring urban tree canopy coverage and estimating shade along walking routes in Wellington, New Zealand.
 
-The original GISCI 343 assignment brief focused on Auckland tree canopy. This implementation uses Wellington City Council open data because the Auckland canopy layer was unavailable during development. The package keeps the same analytical goal: comparing tree-rich neighbourhoods and estimating how shaded a typical walk is.
+It uses Wellington City Council open data (no API key required) and OpenStreetMap routing via OSMnx.
 
-## Data sources
+## Requirements
 
-- Wellington City Council tree cover polygons
-- Wellington City Council suburb boundary polygons
-- OpenStreetMap road and walking route geometry through OSMnx
-
-The WCC layers do not require an API key.
-
-## Main functions
-
-- `load_canopy()` loads Wellington tree canopy polygons.
-- `load_suburbs()` loads Wellington suburb boundary polygons.
-- `canopy_coverage()` calculates canopy percentage for suburb polygons.
-- `route_shade()` estimates canopy cover around route segments.
+- Python 3.10 or higher
+- An internet connection (the package fetches live data from the WCC ArcGIS API and OpenStreetMap)
 
 ## Installation
 
+### From TestPyPI
+
 ```bash
-pip install treecrown-nz-jarm704
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ treecrown-nz-jarm704
+```
 
+### With uv (recommended for new users)
 
+[uv](https://docs.astral.sh/uv/) is a fast Python package manager. If you do not have it yet, install it with:
+
+```bash
+pip install uv
+```
+
+Then create a virtual environment and install the package:
+
+```bash
+uv venv
+uv pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ treecrown-nz-jarm704
+```
+
+### Development setup (cloning this repo)
+
+Clone the repo, move into the folder, then let uv install everything:
+
+```bash
+git clone https://github.com/jarm704-boop/tree-crown.git
+cd tree-crown
+uv sync
+```
+
+`uv sync` reads `uv.lock` and installs all dependencies at the exact pinned versions, including dev tools like pytest.
+
+## Quick-start
+
+```python
 from treecrown_nz import load_suburbs, load_canopy, canopy_coverage
 
-suburbs = load_suburbs(["Karori", "Kelburn", "Te Aro"])
+suburbs = load_suburbs(["Highbury", "Aro Valley", "Karaka Bays"])
 canopy = load_canopy(tuple(suburbs.total_bounds))
-
 result = canopy_coverage(suburbs, canopy)
 print(result[["suburb", "canopy_pct"]])
+```
 
+Expected output (values may vary slightly with WCC data updates):
 
+```
+        suburb  canopy_pct
+35    Highbury   71.640717
+43  Aro Valley   44.584114
+24 Karaka Bays   39.546921
+```
 
----
+## Demo notebook
 
-## 7. Install everything in Positron terminal
+[`demo_treecrown_nz.ipynb`](demo_treecrown_nz.ipynb) walks through a complete real-world analysis:
 
-Make sure you are in your project folder:
+- Calculates canopy coverage for all 57 Wellington suburbs and ranks them
+- Maps the top three suburbs by tree cover (Highbury, Aro Valley, Karaka Bays)
+- Fetches the walking network for Karaka Bay and runs `route_shade()` along Karaka Bay Road
+- Produces a colour-coded map showing shade percentage along the walking corridor
+
+To run it, clone the repo and launch Jupyter after `uv sync`:
 
 ```bash
-cd C:\Users\joshu\Documents\GitHub\treecrown-nz
+jupyter notebook demo_treecrown_nz.ipynb
+```
 
+## API reference
 
-uv sync
+| Function | Description |
+|---|---|
+| `load_canopy(bbox)` | Load Wellington tree canopy polygons, optionally filtered to a bounding box |
+| `load_suburbs(names)` | Load Wellington suburb boundary polygons, optionally filtered by name |
+| `canopy_coverage(area_gdf, canopy_gdf)` | Calculate canopy percentage for each input area polygon |
+| `route_shade(route_gdf, canopy_gdf, buffer_m)` | Estimate canopy cover within a buffer around each route segment |
 
+All functions work in EPSG:2193 (NZTM) and reproject input data automatically.
 
-uv add geopandas pandas requests shapely matplotlib osmnx
-uv add --dev pytest
+## Running the tests
+
+After cloning the repo and running `uv sync`, you can run the test suite with:
+
+```bash
+uv run pytest
+```
+
+To also see a coverage report:
+
+```bash
+uv run pytest --cov=treecrown_nz --cov-report=term-missing
+```
+
+Tests are in the `tests/` folder and cover the core functions `canopy_coverage` and `route_shade`. They run offline using synthetic geometry so no internet connection is needed.
+
+GitHub Actions runs the tests automatically on every push to the repository.
+
+## Data sources
+
+- Wellington City Council tree cover polygons (WCC ArcGIS REST API)
+- Wellington City Council suburb boundary polygons (WCC ArcGIS REST API)
+- OpenStreetMap road and walking route geometry via OSMnx
+
+## Licence
+
+MIT, see [LICENSE](LICENSE).
